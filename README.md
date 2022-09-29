@@ -37,7 +37,6 @@ elasticsearch_cluster_name                       | **elasticsearch**            
 elasticsearch_bootstrap_memory_lock              | **true**                     | 
 elasticsearch_discovery_zen_minimum_master_nodes | **2**                        | Setup number minimum of master node
 elasticsearch_templates_enabled                  | **false**                    | Active template 
--------------------------------------------------|------------------------------|------------------------------------------------------
 
 
 ## :arrows_counterclockwise: Dependencies
