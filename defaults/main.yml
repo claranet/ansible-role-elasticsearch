@@ -66,4 +66,3 @@ elasticsearch_plugins: []
 
 elasticsearch_templates_enabled: false
 elasticsearch_templates: {}
-
