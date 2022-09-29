@@ -1,0 +1,3 @@
+---
+- name: restart elasticsearch
+  include_tasks: ../handlers/restart_elasticsearch.yml

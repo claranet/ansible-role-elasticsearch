@@ -1,0 +1,69 @@
+---
+## ElasticSearch
+elasticsearch_gpg_url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+elasticsearch_version: 7.17.6
+elasticsearch_version_depot: 7.x
+elasticsearch_repo_origin: elastic
+# elasticsearch_repo_origin: oss
+
+## Java
+# Elasticsearch is built using Java, and includes a bundled version of OpenJDK
+# To install the version availaible with the distribution, set elasticsearch_jdk_install to true
+elasticsearch_jdk_install: "{{ false if (elasticsearch_version is version_compare('7.0.0', '>=')) else true }}"
+# Default version installed
+elasticsearch_jdk_version: default-jdk
+# To set JAVA_HOME with the version you want to use.
+# If empty, the bundled version will be used
+elasticsearch_java_home: ""
+elasticsearch_jna_tmpdir: /var/tmp
+
+## Template
+elasticsearch_elasticsearch_yml_template: elasticsearch/elasticsearch.yml.j2
+elasticsearch_jvm_options_template: elasticsearch/jvm.options.j2
+elasticsearch_log4j2_properties_template: elasticsearch/log4j2.properties.j2
+
+## ElasticSearch default
+elasticsearch_default_user: elasticsearch
+elasticsearch_default_group: elasticsearch
+elasticsearch_default_es_tmpdir: ""
+elasticsearch_default_es_java_opts:
+  - "-Djna.tmpdir={{ elasticsearch_jna_tmpdir }}"
+elasticsearch_default_es_startup_sleep_time: 5
+elasticsearch_default_max_open_files: 65536
+elasticsearch_default_max_locked_memory: 'unlimited'
+elasticsearch_default_max_map_count: 262144
+elasticsearch_default_options: {}
+
+## ElasticSearch Config
+elasticsearch_node_name: "{{ inventory_hostname }}"
+elasticsearch_node_attr_rack: r1
+elasticsearch_path_data: /var/lib/elasticsearch
+elasticsearch_path_logs: /var/log/elasticsearch
+elasticsearch_bootstrap_memory_lock: true
+elasticsearch_settings: {}
+
+elasticsearch_jvm_xms: 1g
+elasticsearch_jvm_xmx: 1g
+elasticsearch_jvm_heapdumppath: "{{ elasticsearch_path_data }}"
+elasticsearch_jvm_errorfile: "{{ elasticsearch_path_logs }}/hs_err_pid%p.log"
+elasticsearch_jvm_options: []
+
+## ElasticSearch Cluster
+elasticsearch_cluster_setup: false
+elasticsearch_cluster_name: 'elasticsearch'
+elasticsearch_discovery_zen_minimum_master_nodes: 2
+elasticsearch_node_ip_address: 127.0.0.1
+elasticsearch_cluster_nodes: []
+elasticsearch_populate_etc_hosts: true
+
+elasticsearch_plugins: []
+# - name: ingest-user-agent
+#   state: present
+# - name: ingest-geoip
+#   state: present
+# - name: discovery-file
+#   state: absent
+
+elasticsearch_templates_enabled: false
+elasticsearch_templates: {}
+

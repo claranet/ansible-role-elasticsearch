@@ -1,0 +1,23 @@
+---
+- name: Check if elasticsearch is available to create templates
+  ansible.builtin.wait_for:
+    port: "{{ elasticsearch_settings['http.port'] | default(9200) }}"
+    sleep: 5
+    timeout: 60
+
+- name: Install templates
+  ansible.builtin.uri:
+    url: "http://{{ api_host }}:{{ elasticsearch_settings['http.port'] | default(9200) }}/_template/{{ item.key }}"
+    method: PUT
+    status_code: 200
+    body_format: json
+    body: "{{ item.value | to_json }}"
+    timeout: 10
+  loop: "{{ elasticsearch_templates | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  run_once: true
+  vars:
+    api_host: "{{ elasticsearch_settings['http.host'] | default('127.0.0.1') }}"
+  environment:
+    no_proxy: "{{ api_host }}"

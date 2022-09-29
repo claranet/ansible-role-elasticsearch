@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+
+cluster.name: {{ elasticsearch_cluster_name }}
+node.name: {{ elasticsearch_node_name }}
+
+path.data: {{ elasticsearch_path_data }}
+path.logs: {{ elasticsearch_path_logs }}
+
+bootstrap.memory_lock: {{ elasticsearch_bootstrap_memory_lock }}
+
+{% if elasticsearch_settings %}
+{{ elasticsearch_settings | to_nice_yaml }}
+{% endif %}
+
+{% if elasticsearch_cluster_setup %}
+discovery.zen.ping.unicast.hosts:
+{% for host in elasticsearch_cluster_nodes %}
+  - {{ host.node }}{% if host.port is defined %}:{{ host.port }}{% endif %}
+
+{% endfor %}
+{% endif %}
+
+{% if elasticsearch_cluster_setup %}
+discovery.zen.minimum_master_nodes: {{ elasticsearch_discovery_zen_minimum_master_nodes | int }}
+{% endif %}
+
+

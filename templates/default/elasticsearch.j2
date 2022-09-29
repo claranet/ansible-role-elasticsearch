@@ -1,0 +1,72 @@
+################################
+# {{ ansible_managed }}
+################################
+
+# Elasticsearch user
+ES_USER='{{ elasticsearch_default_user }}'
+
+# Elasticsearch group
+ES_GROUP='{{ elasticsearch_default_group }}'
+
+# Elasticsearch home directory
+#ES_HOME=/usr/share/elasticsearch
+
+# Elasticsearch Java path
+{% if elasticsearch_java_home != "" %}
+JAVA_HOME={{ elasticsearch_java_home }}
+{% else %}
+#JAVA_HOME=
+{% endif %}
+
+# Elasticsearch tmp directory
+{% if elasticsearch_default_es_tmpdir != "" %}
+ES_TMPDIR={{ elasticsearch_default_es_tmpdir }}
+{% else %}
+#ES_TMPDIR=
+{% endif %}
+
+# Elasticsearch configuration directory
+ES_PATH_CONF=/etc/elasticsearch
+
+# Elasticsearch PID directory
+#PID_DIR=/var/run/elasticsearch
+
+# Additional Java OPTS
+ES_JAVA_OPTS='{{ elasticsearch_default_es_java_opts | join(' ') }}'
+
+# Configure restart on package upgrade (true, every other setting will lead to not restarting)
+#RESTART_ON_UPGRADE=true
+
+################################
+# Elasticsearch service
+################################
+
+# SysV init.d
+#
+# The number of seconds to wait before checking if Elasticsearch started successfully as a daemon process
+ES_STARTUP_SLEEP_TIME={{ elasticsearch_default_es_startup_sleep_time | int }}
+
+################################
+# System properties
+################################
+
+# Specifies the maximum file descriptor number that can be opened by this process
+# When using Systemd, this setting is ignored and the LimitNOFILE defined in
+# /usr/lib/systemd/system/elasticsearch.service takes precedence
+MAX_OPEN_FILES={{ elasticsearch_default_max_open_files | int }}
+
+# The maximum number of bytes of memory that may be locked into RAM
+# Set to "unlimited" if you use the 'bootstrap.memory_lock: true' option
+# in elasticsearch.yml.
+# When using systemd, LimitMEMLOCK must be set in a unit file such as
+# /etc/systemd/system/elasticsearch.service.d/override.conf.
+MAX_LOCKED_MEMORY={{ elasticsearch_default_max_locked_memory }}
+
+# Maximum number of VMA (Virtual Memory Areas) a process can own
+# When using Systemd, this setting is ignored and the 'vm.max_map_count'
+# property is set at boot time in /usr/lib/sysctl.d/elasticsearch.conf
+MAX_MAP_COUNT={{ elasticsearch_default_max_map_count | int }}
+
+{% for param, value in elasticsearch_default_options.items() %}
+{{ param }}={{ value }}
+{% endfor %}

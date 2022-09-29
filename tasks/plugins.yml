@@ -1,0 +1,42 @@
+---
+- name: Local dir for plugins archives
+  ansible.builtin.file:
+    path: /opt/ansible_elasticsearch
+    owner: root
+    group: root
+    mode: 0750
+    state: directory
+
+- name: Download Plugins for offline installation
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "/opt/ansible_elasticsearch/plugins-{{ item.name }}"
+    use_proxy: true
+    mode: '0440'
+  loop: "{{ elasticsearch_plugins }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.url is defined
+
+- name: Install Plugins # noqa jinja[spacing] yaml[comments]
+  elasticsearch_plugin:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+    version: "{{ item.version | default(omit) }}"
+    force: "{{ item.force | default(true) }}"
+    src: >-
+      {%- if item.path is defined -%}
+      {{-   'file://' + item.path -}}
+      {%- elif item.url is defined -%}
+      {{-   'file:///opt/ansible_elasticsearch/plugins-' + item.name -}}
+      {%- else %}
+      {{-   omit -}}
+      {%- endif -%}
+  loop: "{{ elasticsearch_plugins }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify:
+    - restart elasticsearch
+
+- name: Flush handlers to handle plugins
+  ansible.builtin.meta: flush_handlers

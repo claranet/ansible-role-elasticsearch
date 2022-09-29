@@ -1,0 +1,17 @@
+---
+
+- name: Install openjdk
+  ansible.builtin.apt:
+    name: "{{ elasticsearch_jdk_version }}"
+    state: present
+
+- name: Get stat on /usr/bin/javac file
+  ansible.builtin.stat:
+    path: /usr/bin/javac
+  register: javac_file
+
+- name: Set JAVA_HOME with current jdk home # noqa jinja[spacing] yaml[comments]
+  ansible.builtin.set_fact:
+    # -9 : to remove bin/javac from the end of the string
+    elasticsearch_java_home: "{{ javac_file.stat.lnk_source[:-9] }}"
+  when: '(elasticsearch_java_home|length) == 0 and (javac_file.stat.islnk | default(False))'
