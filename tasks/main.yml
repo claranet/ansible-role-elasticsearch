@@ -17,7 +17,22 @@
   loop_control:
     loop_var: loop_vars
 
-- import_tasks: java.yml
+- name: Check if ElasticSearch already installed
+  block:
+    - name: "Make dpkg-query"
+      ansible.builtin.command: dpkg-query -W 'elasticsearch'
+      no_log: true
+      failed_when: false
+      changed_when: false
+      register: _elasticsearch_check_existing_install
+
+    - name: "Set facts for store checking results"
+      ansible.builtin.set_fact:
+        _elasticsearch_is_installed: "{{ _elasticsearch_check_existing_install.stdout_lines | select('search', elasticsearch_version) | list | bool }}"
+
+
+- name: "Install java"
+  ansible.builtin.import_tasks: java.yml
   when: elasticsearch_jdk_install | bool
 
 - name: Ensure needed packages are installed
@@ -56,37 +71,17 @@
     filename: elasticsearch
   when: elasticsearch_repo_origin == 'elastic'
 
-- name: Check if ElasticSearch already installed
-  ansible.builtin.command: dpkg-query -W 'elasticsearch'
-  no_log: true
-  failed_when: false
-  changed_when: false
-  register: elasticsearch_is_installed
-
-- name: show elasticsearch_is_installed
-  ansible.builtin.debug:
-    var: elasticsearch_is_installed.rc
-
-- name: show elasticsearch_is_installed
-  ansible.builtin.debug:
-    var: elasticsearch_is_installed
-
-- name: Mask ElasticSearch service
-  ansible.builtin.systemd:
-    name: elasticsearch
-    masked: true
-  when: elasticsearch_is_installed.rc != 1
-
 - name: Install ElasticSearch
   ansible.builtin.apt:
     name: elasticsearch={{ elasticsearch_version }}
     state: present
 
+
 # check CVE-2021-44228
 - name: zip -q -d "…elasticsearch…/log4j-core-2.*.jar" 'org/apache/logging/log4j/core/lookup/JndiLookup.class'
   ansible.builtin.shell:
     cmd: |
-      set -e -x
+      set -e -x -o pipefail
       # CVE-2021-44228 & CVE-2021-45046 impact log4j between version 2.0 and 2.15 (included)
       # log4j version: MAJOR.MINOR.PATCH
       JAR_PATH="$(dpkg -L elasticsearch | grep 'log4j-core-2.*\.jar$' || true)"
@@ -109,7 +104,7 @@
   register: elasticsearch_cve_2021_44228_
   changed_when: elasticsearch_cve_2021_44228_.stdout.endswith('ANSIBLE CHANGED')
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: /etc/default/elasticsearch
   ansible.builtin.template:
@@ -119,7 +114,7 @@
     group: elasticsearch
     mode: 0660
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: elasticsearch path data
   ansible.builtin.file:
@@ -154,7 +149,7 @@
     group: elasticsearch
     mode: 0660
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: /etc/elasticsearch/jvm.options
   ansible.builtin.template:
@@ -164,7 +159,7 @@
     group: elasticsearch
     mode: 0660
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: /etc/elasticsearch/log4j2.properties
   ansible.builtin.template:
@@ -174,7 +169,7 @@
     group: elasticsearch
     mode: 0660
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: Create file /etc/systemd/system/elasticsearch.service.d/01-mlockall.conf
   ansible.builtin.template:
@@ -185,11 +180,12 @@
     mode: 0444
   register: elasticsearch_mlock_systemd_file_
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
   when: elasticsearch_bootstrap_memory_lock
 
 - name: Populate /etc/hosts
   when: not elasticsearch_cluster_setup and elasticsearch_populate_etc_hosts
+  tags: molecule-notest
   block:
     - name: getent
       ansible.builtin.getent:
@@ -202,23 +198,21 @@
         line: "{{ elasticsearch_node_ip_address }} {{ (getent_hosts[elasticsearch_node_ip_address] | default([])) | union([ansible_hostname]) | join(' ') }}"
         mode: 0644
         state: present
-  tags: molecule-notest
 
-- name: clustering tasks
-  import_tasks: cluster.yml
+- name: Clustering tasks
+  ansible.builtin.import_tasks: cluster.yml
   when: elasticsearch_cluster_setup | bool
 
-- name: systemctl enable --now elasticsearch.service
+- name: Systemctl enable elasticsearch.service
   ansible.builtin.systemd:
     name: elasticsearch.service
     daemon-reload: "{{ elasticsearch_mlock_systemd_file_ is changed }}"
     masked: false
     enabled: true
-    state: started
 
-- name: plugins management
-  import_tasks: plugins.yml
+- name: Plugins management
+  ansible.builtin.import_tasks: plugins.yml
 
-- name: templates management
-  import_tasks: templates.yml
+- name: Templates management
+  ansible.builtin.import_tasks: templates.yml
   when: elasticsearch_templates_enabled | bool
