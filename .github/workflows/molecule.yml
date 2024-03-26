@@ -6,6 +6,8 @@ on:  # yamllint disable-line rule:truthy
     tags_ignore:
       - '*'
   pull_request:
+  schedule:
+    - cron: '0 0 1 */3 *'
 
 jobs:
   setup:
@@ -20,7 +22,9 @@ jobs:
           JSON="["
 
           for s in $(find molecule -mindepth 1 -maxdepth 1 -type d -exec basename "{}" \;); do
-            JSON="${JSON}\"${s}\","
+              if [ -e "molecule/${s}/molecule.yml" ]; then
+                  JSON="${JSON}\"${s}\","
+              fi
           done
 
           JSON="${JSON%?}"
@@ -39,10 +43,9 @@ jobs:
         with:
           path: "${{ github.repository }}"
       - name: molecule
-        uses: robertdebock/molecule-action@4.0.9
+        uses: ansible/ansible-lint-action@main
         with:
-          command: lint
-          scenario: ${{ fromJson(needs.setup.outputs.scenarios)[0] }}
+          path: "."
 
   test:
     name: Scenario "${{ matrix.scenario }}" on ${{ matrix.config.image }}:${{ matrix.config.tag }}
@@ -55,15 +58,10 @@ jobs:
       matrix:
         scenario: ${{ fromJson(needs.setup.outputs.scenarios) }}
         config:
-          - image: "amazonlinux"
-            tag: "latest"
-          - name: "redhat"
-            image: "registry.access.redhat.com/ubi8/ubi"
-            tag: "latest"
+          - image: "debian"
+            tag: "12"
           - image: "debian"
             tag: "11"
-          - image: "debian"
-            tag: "10"
           - image: "ubuntu"
             tag: "22.04"
 
@@ -73,10 +71,12 @@ jobs:
         with:
           path: "${{ github.repository }}"
       - name: molecule
-        uses: robertdebock/molecule-action@4.0.9
+        uses: gofrolist/molecule-action@v2
         with:
+          # molecule_options: --debug
+          molecule_command: test
+          molecule_args: --scenario-name ${{ matrix.scenario }} -d docker
+          molecule_working_dir: "${{ github.repository }}"
+        env:
           image: ${{ matrix.config.image }}
           tag: ${{ matrix.config.tag }}
-          scenario: ${{ matrix.scenario }}
-        env:
-          name: ${{ matrix.config.name }}
