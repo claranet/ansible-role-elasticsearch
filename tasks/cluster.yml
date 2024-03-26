@@ -17,4 +17,4 @@
     group: elasticsearch
     mode: 0660
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch

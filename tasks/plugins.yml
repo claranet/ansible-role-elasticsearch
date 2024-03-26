@@ -19,7 +19,7 @@
   when: item.url is defined
 
 - name: Install Plugins # noqa jinja[spacing] yaml[comments]
-  elasticsearch_plugin:
+  community.general.elasticsearch_plugin:
     name: "{{ item.name }}"
     state: "{{ item.state | default('present') }}"
     version: "{{ item.version | default(omit) }}"
@@ -36,7 +36,7 @@
   loop_control:
     label: "{{ item.name }}"
   notify:
-    - restart elasticsearch
+    - Restart elasticsearch
 
 - name: Flush handlers to handle plugins
   ansible.builtin.meta: flush_handlers
