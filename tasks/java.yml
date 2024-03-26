@@ -1,5 +1,4 @@
 ---
-
 - name: Install openjdk
   ansible.builtin.apt:
     name: "{{ elasticsearch_jdk_version }}"

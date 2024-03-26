@@ -1,6 +1,9 @@
 ---
 dependency:
-  name: galaxy
+  name: shell
+  command: |
+    pip install requests pytest-testinfra &&
+    ansible-galaxy collection install community.crypto community.general
 
 driver:
   name: docker
@@ -8,9 +11,8 @@ driver:
 platforms:
   # On "${name:-${image:-debian}", the last brace does not miss, it works like that...
   # The env var should be used when the image variable refers to a full registry path like registry.access.redhat.com/ubi8/ubi
-  - name: claranet_elasticsearch
-    #image: ${image:-debian}:${tag:-latest}
-    image: debian:latest
+  - name: claranet_elasticsearch_${name:-${image:-debian}-${tag:-latest}-${scenario:-default}
+    image: ${image:-debian}:${tag:-latest}
     privileged: true
     tty: true
     volumes:
@@ -27,14 +29,14 @@ provisioner:
   name: ansible
   env:
     ANSIBLE_FORCE_COLOR: "true"
+    ANSIBLE_LOAD_CALLBACK_PLUGINS: "true"
+    ANSIBLE_CALLBACKS_ENABLED: "ansible.posix.profile_tasks"
+    ANSIBLE_STDOUT_CALLBACK: "ansible.posix.debug"
   options:
     v: true
-  log: true
 
 verifier:
   name: testinfra
-  lint:
-    name: flake8
   options:
     verbose: true
     s: true

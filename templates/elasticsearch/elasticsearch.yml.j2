@@ -24,4 +24,7 @@ discovery.zen.ping.unicast.hosts:
 discovery.zen.minimum_master_nodes: {{ elasticsearch_discovery_zen_minimum_master_nodes | int }}
 {% endif %}
 
-
+{# disable ingest geoip downloader #}
+{% if not (elasticsearch_plugins | selectattr('name','equalto','ingest-geoip') | selectattr('state','equalto','present') | length > 0 | bool) %}
+ingest.geoip.downloader.enabled: false
+{% endif %}
